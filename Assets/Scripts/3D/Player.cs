@@ -9,12 +9,12 @@ public class Player : MonoBehaviour
     float verticalInput, horizontalInput;
 
     bool isCrouching;
-    float originalHeight;
+    float original;
 
     void Start(){
 
         controller = GetComponent<CharacterController>();
-        originalHeight = controller.height;
+        original = controller.height;
     }
 
     void Update() {
@@ -40,15 +40,20 @@ public class Player : MonoBehaviour
 
         }
 
-        if (Input.GetKeyDown(KeyCode.LeftControl) && isCrouching == false) {
+        if (Input.GetKeyDown(KeyCode.LeftControl) && isCrouching == false)
+        {
             isCrouching = true;
-            controller.height = originalHeight * 0.35f;
+            controller.height = original * 0.35f;
 
         }
 
-        else if (Input.GetKeyUp(KeyCode.LeftControl)) {
+        else if (Input.GetKeyUp(KeyCode.LeftControl))
+        {
             isCrouching = false;
-            controller.height = originalHeight;
+            controller.height = original;
         }
+
+        moveDirection.y -= 20.0f * Time.deltaTime;
+        controller.Move(moveDirection * Time.deltaTime);
     }
 }
