@@ -28,8 +28,10 @@ public class TrapController : MonoBehaviour
         gameObject.transform.Rotate(gameObject.transform.rotation.x, gameObject.transform.rotation.y, rotationZ);
     }
 
-    private void OnTriggerEnter(Collider collision)
+    private void OnTriggerEnter2D(Collider2D collision)
     {
         player.transform.position = respawnPoint.transform.position;
+
     }
+
 }
