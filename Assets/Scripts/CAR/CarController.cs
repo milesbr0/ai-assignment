@@ -83,7 +83,6 @@ public class CarController : MonoBehaviour
         }
     }
 
-
     public void UpdateFitness()
     {
         network.fitness = checkpointPosition;//updates fitness of network for sorting
