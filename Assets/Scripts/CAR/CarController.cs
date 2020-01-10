@@ -40,6 +40,7 @@ public class CarController : MonoBehaviour
                     if (Physics.Raycast(Ray, out hit, 10, rayCastMask))
                     {
                         input[i] = (10 - hit.distance) / 10;//return distance, 1 being close
+                        Debug.DrawLine(transform.position, hit.point, Color.green);
                     }
                     else
                     {

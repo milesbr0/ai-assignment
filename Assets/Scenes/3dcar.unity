@@ -2082,83 +2082,6 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 283212257}
   m_Mesh: {fileID: 10202, guid: 0000000000000000e000000000000000, type: 0}
---- !u!1 &296707805
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 296707806}
-  - component: {fileID: 296707808}
-  - component: {fileID: 296707807}
-  m_Layer: 5
-  m_Name: Children left text
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!224 &296707806
-RectTransform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 296707805}
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_Children: []
-  m_Father: {fileID: 948817284}
-  m_RootOrder: 3
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0.5, y: 0.5}
-  m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 179.2, y: 142.3}
-  m_SizeDelta: {x: 160, y: 30}
-  m_Pivot: {x: 0.5, y: 0.5}
---- !u!114 &296707807
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 296707805}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 5f7201a12d95ffc409449d95f23cf332, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  m_Material: {fileID: 0}
-  m_Color: {r: 1, g: 1, b: 1, a: 1}
-  m_RaycastTarget: 1
-  m_OnCullStateChanged:
-    m_PersistentCalls:
-      m_Calls: []
-  m_FontData:
-    m_Font: {fileID: 10102, guid: 0000000000000000e000000000000000, type: 0}
-    m_FontSize: 14
-    m_FontStyle: 0
-    m_BestFit: 0
-    m_MinSize: 10
-    m_MaxSize: 40
-    m_Alignment: 0
-    m_AlignByGeometry: 0
-    m_RichText: 1
-    m_HorizontalOverflow: 0
-    m_VerticalOverflow: 0
-    m_LineSpacing: 1
-  m_Text: Children left
---- !u!222 &296707808
-CanvasRenderer:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 296707805}
-  m_CullTransparentMesh: 0
 --- !u!1 &297355030
 GameObject:
   m_ObjectHideFlags: 0
@@ -5928,7 +5851,6 @@ RectTransform:
   - {fileID: 671379040}
   - {fileID: 1736477703}
   - {fileID: 1283494544}
-  - {fileID: 296707806}
   m_Father: {fileID: 0}
   m_RootOrder: 6
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
@@ -9503,7 +9425,7 @@ GameObject:
   - component: {fileID: 1585946529}
   - component: {fileID: 1585946528}
   m_Layer: 0
-  m_Name: Manager
+  m_Name: ANN Manager
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -9524,13 +9446,14 @@ MonoBehaviour:
   generationText: {fileID: 671379041}
   timeLeftText: {fileID: 1736477704}
   bestFitnessText: {fileID: 1283494545}
-  carsLeftText: {fileID: 296707807}
-  waweTime: 15
+  bestCarMaterial: {fileID: 2100000, guid: 0e37866798cfd0241ad52b8460a5c3dd, type: 2}
+  averageCarMaterial: {fileID: 2100000, guid: a2aeca052d520074d8b29300ede2df3e, type: 2}
+  waweTime: 25
   populationSize: 100
   carPrefab: {fileID: 1243763141402508234, guid: 38fd5dc0bbedf6a4b8b6c8c9823c39ee,
     type: 3}
   spawnPoint: {fileID: 1251810769}
-  layers: 050000000300000002000000
+  networkSize: 050000000300000002000000
 --- !u!4 &1585946529
 Transform:
   m_ObjectHideFlags: 0

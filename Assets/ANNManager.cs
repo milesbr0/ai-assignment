@@ -1,40 +1,42 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 using UnityEngine.UI;
 
 
-public class Manager : MonoBehaviour
+public class ANNManager : MonoBehaviour
 {
 
     //GUI
     public Text generationText;
     public Text timeLeftText;
     public Text bestFitnessText;
-    public Text carsLeftText;
     private int generationNumber = 0;
     private float timeLeft;
     private float bestFitness;
     private int carsLeft;
 
+
+    [SerializeField] private Material bestCarMaterial;
+    [SerializeField] private Material averageCarMaterial;
+
     public float waweTime;
-    public int populationSize;//creates population size
-    public GameObject carPrefab;//holds bot prefab
+    public int populationSize;
+    public GameObject carPrefab;
     public Transform spawnPoint;
     private Vector3 spawnPointCoord;
 
-    public int[] layers = new int[3] { 5, 3, 2 };//initializing network to the right size
+    //neural network initialization
+    public int[] networkSize = new int[3] { 5, 3, 2 };
 
-    //public List<Bot> Bots;
-    public List<NeuralNetwork> networks;
+    public List<NeuralNetwork> ANNModels;
     private List<CarController> cars;
 
-    void Start()// Start is called before the first frame update
+    void Start()
     {
-        if (populationSize % 2 != 0)
-            populationSize = 50;//if population size is not even, sets it to fifty
         InitNetworks();
-        InvokeRepeating("CreateBots", 0.1f, waweTime);//repeating function
+        InvokeRepeating("SpawnCars", 0.1f, waweTime);
 
         spawnPointCoord = new Vector3(spawnPoint.position.x, spawnPoint.position.y, spawnPoint.position.z);
     }
@@ -44,28 +46,35 @@ public class Manager : MonoBehaviour
         generationText.text = "Generation: " + generationNumber;
         timeLeft -= 1 * Time.deltaTime;
         timeLeftText.text = "Time left: " + Mathf.FloorToInt(timeLeft+1);
-        for(int i = 0; i < populationSize; i++)
+        for (int i = 0; i < cars.Count; i++)
         {
-            if (cars[i].network.fitness > bestFitness) bestFitness = cars[i].network.fitness;
-            if (cars[i].isCollided) carsLeft--;
+            if (cars[i].checkpointPosition >= bestFitness)
+            {
+                bestFitness = cars[i].checkpointPosition;
+                if (bestFitness != 0)
+                {
+                    cars[i].GetComponent<Renderer>().material = bestCarMaterial;
+                }
+            }
+            else
+                cars[i].GetComponent<Renderer>().material = averageCarMaterial;
         }
+
         bestFitnessText.text = "Best fitness: " + bestFitness;
-        carsLeftText.text = "Children left: " + carsLeft;
 
     }
 
     public void InitNetworks()
     {
-        networks = new List<NeuralNetwork>();
+        ANNModels = new List<NeuralNetwork>();
         for (int i = 0; i < populationSize; i++)
         {
-            NeuralNetwork net = new NeuralNetwork(layers);
-            //net.Load("Assets/Save.txt");//on start load the network save
-            networks.Add(net);
+            NeuralNetwork net = new NeuralNetwork(networkSize);
+            ANNModels.Add(net);
         }
     }
 
-    public void CreateBots()
+    public void SpawnCars()
     {
         timeLeft = waweTime;
         carsLeft = populationSize;
@@ -73,17 +82,17 @@ public class Manager : MonoBehaviour
         {
             for (int i = 0; i < cars.Count; i++)
             {
-                GameObject.Destroy(cars[i].gameObject);//if there are Prefabs in the scene this will get rid of them
+                GameObject.Destroy(cars[i].gameObject); //delete previous generation
             }
             generationNumber++;
-            UpdateANN();//this sorts networks and mutates them
+            UpdateANN();//update and mutate next generation's neural network
         }
 
         cars = new List<CarController>();
         for (int i = 0; i < populationSize; i++)
         {
             CarController car = (Instantiate(carPrefab, spawnPointCoord, new Quaternion(0, 0, 1, 0))).GetComponent<CarController>();//create botes
-            car.network = networks[i];//deploys network to each learner
+            car.network = ANNModels[i];
             cars.Add(car);
         }
 
@@ -94,12 +103,17 @@ public class Manager : MonoBehaviour
         for (int i = 0; i < populationSize; i++)
             cars[i].UpdateFitness();
 
-        networks.Sort();
+        ANNModels.Sort();
         for (int i = 0; i < populationSize / 2; i++)
         {
-            networks[i] = networks[i + populationSize / 2].copy(new NeuralNetwork(layers));
-            networks[i].Mutate((int)(1 / 0.01f), 0.5f);
+            ANNModels[i] = ANNModels[i + populationSize / 2].copy(new NeuralNetwork(networkSize));
+            ANNModels[i].Mutate((int)(1 / 0.01f), 0.5f);
         }
+    }
+
+    private void VisualizeANN()
+    {
+        //TODO
     }
 
 }

@@ -4,11 +4,11 @@ using System.IO;
 
 public class NeuralNetwork : IComparable<NeuralNetwork>
 {
-    private int[] layers;//layers
-    private float[][] neurons;//neurons
-    private float[][] biases;//biasses
-    private float[][][] weights;//weights
-    private int[] activations;//layers
+    public int[] layers;//layers
+    public float[][] neurons;//neurons
+    public float[][] biases;//biasses
+    public float[][][] weights;//weights
+    public int[] activations;//layers
 
     public float fitness = 0;//fitness
 
