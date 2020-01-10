@@ -1,248 +1,218 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Collections.ObjectModel;
+﻿using System.Collections.Generic;
+using System;
+using System.IO;
 
-public class NeuralNetwork
+public class NeuralNetwork : IComparable<NeuralNetwork>
 {
-    public UInt32[] Topology // Returns the topology in the form of an array
+    private int[] layers;//layers
+    private float[][] neurons;//neurons
+    private float[][] biases;//biasses
+    private float[][][] weights;//weights
+    private int[] activations;//layers
+
+    public float fitness = 0;//fitness
+
+    public NeuralNetwork(int[] layers)
     {
-        get
+        this.layers = new int[layers.Length];
+        for (int i = 0; i < layers.Length; i++)
         {
-            UInt32[] Result = new UInt32[TheTopology.Count];
+            this.layers[i] = layers[i];
+        }
+        InitNeurons();
+        InitBiases();
+        InitWeights();
+    }
 
-            TheTopology.CopyTo(Result, 0);
+    private void InitNeurons()//create empty storage array for the neurons in the network.
+    {
+        List<float[]> neuronsList = new List<float[]>();
+        for (int i = 0; i < layers.Length; i++)
+        {
+            neuronsList.Add(new float[layers[i]]);
+        }
+        neurons = neuronsList.ToArray();
+    }
 
-            return Result;
+    private void InitBiases()//initializes and populates array for the biases being held within the network.
+    {
+        List<float[]> biasList = new List<float[]>();
+        for (int i = 0; i < layers.Length; i++)
+        {
+            float[] bias = new float[layers[i]];
+            for (int j = 0; j < layers[i]; j++)
+            {
+                bias[j] = UnityEngine.Random.Range(-0.5f, 0.5f);
+            }
+            biasList.Add(bias);
+        }
+        biases = biasList.ToArray();
+    }
+
+    private void InitWeights()//initializes random array for the weights being held in the network.
+    {
+        List<float[][]> weightsList = new List<float[][]>();
+        for (int i = 1; i < layers.Length; i++)
+        {
+            List<float[]> layerWeightsList = new List<float[]>();
+            int neuronsInPreviousLayer = layers[i - 1];
+            for (int j = 0; j < neurons[i].Length; j++)
+            {
+                float[] neuronWeights = new float[neuronsInPreviousLayer];
+                for (int k = 0; k < neuronsInPreviousLayer; k++)
+                {
+                    //float sd = 1f / ((neurons[i].Length + neuronsInPreviousLayer) / 2f);
+                    neuronWeights[k] = UnityEngine.Random.Range(-0.5f, 0.5f);
+                }
+                layerWeightsList.Add(neuronWeights);
+            }
+            weightsList.Add(layerWeightsList.ToArray());
+        }
+        weights = weightsList.ToArray();
+    }
+
+    public float[] FeedForward(float[] inputs)//feed forward, inputs >==> outputs.
+    {
+        for (int i = 0; i < inputs.Length; i++)
+        {
+            neurons[0][i] = inputs[i];
+        }
+        for (int i = 1; i < layers.Length; i++)
+        {
+            int layer = i - 1;
+            for (int j = 0; j < neurons[i].Length; j++)
+            {
+                float value = 0f;
+                for (int k = 0; k < neurons[i - 1].Length; k++)
+                {
+                    value += weights[i - 1][j][k] * neurons[i - 1][k];
+                }
+                neurons[i][j] = activate(value + biases[i][j]);
+            }
+        }
+        return neurons[neurons.Length - 1];
+    }
+
+    public float activate(float value)
+    {
+        return (float)Math.Tanh(value);
+    }
+
+    public void Mutate(int chance, float val)//used as a simple mutation function for any genetic implementations.
+    {
+        for (int i = 0; i < biases.Length; i++)
+        {
+            for (int j = 0; j < biases[i].Length; j++)
+            {
+                biases[i][j] = (UnityEngine.Random.Range(0f, chance) <= 5) ? biases[i][j] += UnityEngine.Random.Range(-val, val) : biases[i][j];
+            }
+        }
+
+        for (int i = 0; i < weights.Length; i++)
+        {
+            for (int j = 0; j < weights[i].Length; j++)
+            {
+                for (int k = 0; k < weights[i][j].Length; k++)
+                {
+                    weights[i][j][k] = (UnityEngine.Random.Range(0f, chance) <= 5) ? weights[i][j][k] += UnityEngine.Random.Range(-val, val) : weights[i][j][k];
+                }
+            }
         }
     }
 
-    ReadOnlyCollection<UInt32> TheTopology; // Contains the topology of the NeuralNetwork
-    NeuralSection[] Sections; // Contains the all the sections of the NeuralNetwork
-
-    Random TheRandomizer; // It is the Random instance used to mutate the NeuralNetwork
-
-    private class NeuralSection
+    public int CompareTo(NeuralNetwork other) //Comparing For NeuralNetworks performance.
     {
-        private double[][] Weights; // Contains all the weights of the section where [i][j] represents the weight from neuron i in the input layer and neuron j in the output layer
+        if (other == null) return 1;
 
-        private Random TheRandomizer; // Contains a reference to the Random instance of the NeuralNetwork
-
-        /// <summary>
-        /// Initiate a NeuralSection from a topology and a seed.
-        /// </summary>
-        /// <param name="InputCount">The number of input neurons in the section.</param>
-        /// <param name="OutputCount">The number of output neurons in the section.</param>
-        /// <param name="Randomizer">The Ransom instance of the NeuralNetwork.</param>
-        public NeuralSection(UInt32 InputCount, UInt32 OutputCount, Random Randomizer)
-        {
-            // Validation Checks
-            if (InputCount == 0)
-                throw new ArgumentException("You cannot create a Neural Layer with no input neurons.", "InputCount");
-            else if (OutputCount == 0)
-                throw new ArgumentException("You cannot create a Neural Layer with no output neurons.", "OutputCount");
-            else if (Randomizer == null)
-                throw new ArgumentException("The randomizer cannot be set to null.", "Randomizer");
-
-            // Set Randomizer
-            TheRandomizer = Randomizer;
-
-            // Initialize the Weights array
-            Weights = new double[InputCount + 1][]; // +1 for the Bias Neuron
-
-            for (int i = 0; i < Weights.Length; i++)
-                Weights[i] = new double[OutputCount];
-
-            // Set random weights
-            for (int i = 0; i < Weights.Length; i++)
-                for (int j = 0; j < Weights[i].Length; j++)
-                    Weights[i][j] = TheRandomizer.NextDouble() - 0.5f;
-        }
-
-        /// <summary>
-        /// Initiates an independent Deep-Copy of the NeuralSection provided.
-        /// </summary>
-        /// <param name="Main">The NeuralSection that should be cloned.</param>
-        public NeuralSection(NeuralSection Main)
-        {
-            // Set Randomizer
-            TheRandomizer = Main.TheRandomizer;
-
-            // Initialize Weights
-            Weights = new double[Main.Weights.Length][];
-
-            for (int i = 0; i < Weights.Length; i++)
-                Weights[i] = new double[Main.Weights[0].Length];
-
-            // Set Weights
-            for (int i = 0; i < Weights.Length; i++)
-            {
-                for (int j = 0; j < Weights[i].Length; j++)
-                {
-                    Weights[i][j] = Main.Weights[i][j];
-                }
-            }
-        }
-
-        /// <summary>
-        /// Feed input through the NeuralSection and get the output.
-        /// </summary>
-        /// <param name="Input">The values to set the input neurons.</param>
-        /// <returns>The values in the output neurons after propagation.</returns>
-        public double[] FeedForward(double[] Input)
-        {
-            // Validation Checks
-            if (Input == null)
-                throw new ArgumentException("The input array cannot be set to null.", "Input");
-            else if (Input.Length != Weights.Length - 1)
-                throw new ArgumentException("The input array's length does not match the number of neurons in the input layer.", "Input");
-
-            // Initialize Output Array
-            double[] Output = new double[Weights[0].Length];
-
-            // Calculate Value
-            for (int i = 0; i < Weights.Length; i++)
-            {
-                for (int j = 0; j < Weights[i].Length; j++)
-                {
-                    if (i == Weights.Length - 1) // If is Bias Neuron
-                        Output[j] += Weights[i][j]; // Then, the value of the neuron is equal to one
-                    else
-                        Output[j] += Weights[i][j] * Input[i];
-                }
-            }
-
-            // Apply Activation Function
-            for (int i = 0; i < Output.Length; i++)
-                Output[i] = ReLU(Output[i]);
-
-            // Return Output
-            return Output;
-        }
-
-        /// <summary>
-        /// Mutate the NeuralSection.
-        /// </summary>
-        /// <param name="MutationProbablity">The probability that a weight is going to be mutated. (Ranges 0-1)</param>
-        /// <param name="MutationAmount">The maximum amount a Mutated Weight would change.</param>
-        public void Mutate(double MutationProbablity, double MutationAmount)
-        {
-            for (int i = 0; i < Weights.Length; i++)
-            {
-                for (int j = 0; j < Weights[i].Length; j++)
-                {
-                    if (TheRandomizer.NextDouble() < MutationProbablity)
-                        Weights[i][j] = TheRandomizer.NextDouble() * (MutationAmount * 2) - MutationAmount;
-                }
-            }
-        }
-
-        /// <summary>
-        /// Puts a double through the activation function ReLU.
-        /// </summary>
-        /// <param name="x">The value to put through the function.</param>
-        /// <returns>x after it is put through ReLU.</returns>
-        private double ReLU(double x)
-        {
-            if (x >= 0)
-                return x;
-            else
-                return x / 20;
-        }
-    }
-
-    /// <summary>
-    /// Initiates a NeuralNetwork from a Topology and a Seed.
-    /// </summary>
-    /// <param name="Topology">The Topology of the Neural Network.</param>
-    /// <param name="Seed">The Seed of the Neural Network. Set to 'null' to use a Timed Seed.</param>
-    public NeuralNetwork(UInt32[] Topology, Int32? Seed = 0)
-    {
-        // Validation Checks
-        if (Topology.Length < 2)
-            throw new ArgumentException("A Neural Network cannot contain less than 2 Layers.", "Topology");
-
-        for (int i = 0; i < Topology.Length; i++)
-        {
-            if (Topology[i] < 1)
-                throw new ArgumentException("A single layer of neurons must contain, at least, one neuron.", "Topology");
-        }
-
-        // Initialize Randomizer
-        if (Seed.HasValue)
-            TheRandomizer = new Random(Seed.Value);
+        if (fitness > other.fitness)
+            return 1;
+        else if (fitness < other.fitness)
+            return -1;
         else
-            TheRandomizer = new Random();
+            return 0;
+    }
 
-        // Set Topology
-        TheTopology = new List<uint>(Topology).AsReadOnly();
-
-        // Initialize Sections
-        Sections = new NeuralSection[TheTopology.Count - 1];
-
-        // Set the Sections
-        for (int i = 0; i < Sections.Length; i++)
+    public NeuralNetwork copy(NeuralNetwork nn) //For creatinga deep copy, to ensure arrays are serialzed.
+    {
+        for (int i = 0; i < biases.Length; i++)
         {
-            Sections[i] = new NeuralSection(TheTopology[i], TheTopology[i + 1], TheRandomizer);
+            for (int j = 0; j < biases[i].Length; j++)
+            {
+                nn.biases[i][j] = biases[i][j];
+            }
+        }
+        for (int i = 0; i < weights.Length; i++)
+        {
+            for (int j = 0; j < weights[i].Length; j++)
+            {
+                for (int k = 0; k < weights[i][j].Length; k++)
+                {
+                    nn.weights[i][j][k] = weights[i][j][k];
+                }
+            }
+        }
+        return nn;
+    }
+
+    public void Load(string path)//this loads the biases and weights from within a file into the neural network.
+    {
+        TextReader tr = new StreamReader(path);
+        int NumberOfLines = (int)new FileInfo(path).Length;
+        string[] ListLines = new string[NumberOfLines];
+        int index = 1;
+        for (int i = 1; i < NumberOfLines; i++)
+        {
+            ListLines[i] = tr.ReadLine();
+        }
+        tr.Close();
+        if (new FileInfo(path).Length > 0)
+        {
+            for (int i = 0; i < biases.Length; i++)
+            {
+                for (int j = 0; j < biases[i].Length; j++)
+                {
+                    biases[i][j] = float.Parse(ListLines[index]);
+                    index++;
+                }
+            }
+
+            for (int i = 0; i < weights.Length; i++)
+            {
+                for (int j = 0; j < weights[i].Length; j++)
+                {
+                    for (int k = 0; k < weights[i][j].Length; k++)
+                    {
+                        weights[i][j][k] = float.Parse(ListLines[index]); ;
+                        index++;
+                    }
+                }
+            }
         }
     }
 
-    /// <summary>
-    /// Initiates an independent Deep-Copy of the Neural Network provided.
-    /// </summary>
-    /// <param name="Main">The Neural Network that should be cloned.</param>
-    public NeuralNetwork(NeuralNetwork Main)
+    public void Save(string path)//this is used for saving the biases and weights within the network to a file.
     {
-        // Initialize Randomizer
-        TheRandomizer = new Random(Main.TheRandomizer.Next());
+        File.Create(path).Close();
+        StreamWriter writer = new StreamWriter(path, true);
 
-        // Set Topology
-        TheTopology = Main.TheTopology;
-
-        // Initialize Sections
-        Sections = new NeuralSection[TheTopology.Count - 1];
-
-        // Set the Sections
-        for (int i = 0; i < Sections.Length; i++)
+        for (int i = 0; i < biases.Length; i++)
         {
-            Sections[i] = new NeuralSection(Main.Sections[i]);
-        }
-    }
-
-    /// <summary>
-    /// Feed Input through the NeuralNetwork and Get the Output.
-    /// </summary>
-    /// <param name="Input">The values to set the Input Neurons.</param>
-    /// <returns>The values in the output neurons after propagation.</returns>
-    public double[] FeedForward(double[] Input)
-    {
-        // Validation Checks
-        if (Input == null)
-            throw new ArgumentException("The input array cannot be set to null.", "Input");
-        else if (Input.Length != TheTopology[0])
-            throw new ArgumentException("The input array's length does not match the number of neurons in the input layer.", "Input");
-
-        double[] Output = Input;
-
-        // Feed values through all sections
-        for (int i = 0; i < Sections.Length; i++)
-        {
-            Output = Sections[i].FeedForward(Output);
+            for (int j = 0; j < biases[i].Length; j++)
+            {
+                writer.WriteLine(biases[i][j]);
+            }
         }
 
-        return Output;
-    }
-
-    /// <summary>
-    /// Mutate the NeuralNetwork.
-    /// </summary>
-    /// <param name="MutationProbablity">The probability that a weight is going to be mutated. (Ranges 0-1)</param>
-    /// <param name="MutationAmount">The maximum amount a mutated weight would change.</param>
-    public void Mutate(double MutationProbablity = 0.3, double MutationAmount = 2.0)
-    {
-        // Mutate each section
-        for (int i = 0; i < Sections.Length; i++)
+        for (int i = 0; i < weights.Length; i++)
         {
-            Sections[i].Mutate(MutationProbablity, MutationAmount);
+            for (int j = 0; j < weights[i].Length; j++)
+            {
+                for (int k = 0; k < weights[i][j].Length; k++)
+                {
+                    writer.WriteLine(weights[i][j][k]);
+                }
+            }
         }
+        writer.Close();
     }
 }
